@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace DataStructures
 {
     [Serializable]
+    [DebuggerDisplay("Count = {Count}")]
     public class Heap<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>,
                                         ICollection,
                                         IReadOnlyCollection<KeyValuePair<TKey, TValue>>
                                             where TKey : IComparable<TKey>
     {
         public int Count { get; private set; }
-        public int Capasity { get { return _entries.Length; } }
         object ICollection.SyncRoot { get { return _syncRoot; } }
         public bool IsSynchronized { get { return false; } }
 
@@ -94,12 +95,12 @@ namespace DataStructures
 
         public void Clear()
         {
-            for (int i = 0; i < Count; i++)
-            {
-                _entries[i] = null;
-            }
-            _version++;
-            Count = 0;
+            if (_entries != null)
+			{
+				Array.Clear(_entries, 0, _entries.Length);
+				_version++;
+				Count = 0;
+			}
         }
 
         public void CopyTo(Array array, int arrayIndex)
