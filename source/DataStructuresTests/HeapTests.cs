@@ -9,39 +9,35 @@ namespace DataStructuresTests
     [TestClass]
     public class HeapTests
     {
-        [TestMethod]
-        public void Heap_OrderItems()
-        {
-            var minHeap = GetFilledIntHeap(HeapType.Min);
-            var minList = new List<int>();
-            while (minHeap.Count > 0)
-            {
-                var item = minHeap.Extract();
-                minList.Add(item.Key);
-            }
-            int minLast = minList.First();
-            for (int i = 1; i < minList.Count; i++)
-            {
-                Assert.IsTrue(minList[i] >= minLast);
-                minLast = minList[i];
-            }
+		[TestMethod]
+		public void Heap_OrderItems()
+		{
+			var heap = GetFilledIntHeap(HeapType.Min);
+			CheckHeapOrder(heap);
+			heap.UpdateHeapType(HeapType.Max);
+			CheckHeapOrder(heap);
+		}
 
-            var maxHeap = GetFilledIntHeap(HeapType.Max);
-            var maxList = new List<int>();
-            while (maxHeap.Count > 0)
-            {
-                var item = maxHeap.Extract();
-                maxList.Add(item.Key);
-            }
-            int maxLast = maxList.First();
-            for (int i = 1; i < maxList.Count; i++)
-            {
-                Assert.IsTrue(maxList[i] <= maxLast);
-                maxLast = maxList[i];
-            }
-        }
+		private void CheckHeapOrder(Heap<int, string> heap)
+		{
+			var list = new List<KeyValuePair<int, string>>(heap.Count);
+			while (heap.Count > 0)
+			{
+				list.Add(heap.Extract());
+			}
+			int last = list.First().Key;
+			for (int i = 1; i < list.Count; i++)
+			{
+				Assert.IsTrue(heap.HeapType == HeapType.Max ? list[i].Key <= last : list[i].Key >= last);
+				last = list[i].Key;
+			}
+			foreach (var p in list)
+			{
+				heap.Add(p.Key, p.Value);
+			}
+		}
 
-        [TestMethod]
+		[TestMethod]
         public void Heap_EnumerateHeap()
         {
             var minHeap = GetFilledIntHeap();

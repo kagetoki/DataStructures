@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 
 namespace DataStructures
 {
@@ -18,7 +19,7 @@ namespace DataStructures
 
         private const int MIN_LENGTH = 4;
         private int _version;
-        public readonly HeapType HeapType;
+        public HeapType HeapType { get; private set; }
         private object _syncRoot;
 
         private Entry[] _entries;
@@ -29,6 +30,7 @@ namespace DataStructures
             _version = 0;
             _syncRoot = new object();
         }
+
         public void Add(TKey key, TValue value)
         {
             if (key == null)
@@ -103,7 +105,26 @@ namespace DataStructures
 			}
         }
 
-        public void CopyTo(Array array, int arrayIndex)
+		public void UpdateHeapType(HeapType heapType)
+		{
+			if (heapType == HeapType) { return; }
+			if (_entries == null || Count == 0)
+			{
+				HeapType = heapType;
+				return;
+			}
+			var elements = new Entry[_entries.Length];
+			var elementsCount = Count;
+			Array.Copy(_entries, elements, _entries.Length);
+			Clear();
+			HeapType = heapType;
+			for (int i = 0; i < elementsCount; i++)
+			{
+				Add(elements[i].Key, elements[i].Value);
+			}
+		}
+
+		public void CopyTo(Array array, int arrayIndex)
         {
             Array.Copy(_entries, 0, array, arrayIndex, _entries.Length);
         }
@@ -169,12 +190,6 @@ namespace DataStructures
 
         private void Swap(int parentIndex, int childIndex)
         {
-            //#if DEBUG
-            //			if ((int)(childIndex - 1) / 2 != parentIndex)
-            //			{
-            //				throw new InvalidOperationException("You can swap only parent with child!");
-            //			}
-            //#endif
             var parent = _entries[parentIndex];
             _entries[parentIndex] = _entries[childIndex];
             _entries[childIndex] = parent;
@@ -216,7 +231,12 @@ namespace DataStructures
             {
                 return new KeyValuePair<TKey, TValue>(entry.Key, entry.Value);
             }
-        }
+
+			public override string ToString()
+			{
+				return string.Format("[{0}:{1}]", Key, Value);
+			}
+		}
 
         #region IEnumerable
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
