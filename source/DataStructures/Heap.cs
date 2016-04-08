@@ -105,26 +105,26 @@ namespace DataStructures
 			}
         }
 
-		public void UpdateHeapType(HeapType heapType)
+	public void UpdateHeapType(HeapType heapType)
+	{
+		if (heapType == HeapType) { return; }
+		if (_entries == null || Count == 0)
 		{
-			if (heapType == HeapType) { return; }
-			if (_entries == null || Count == 0)
-			{
-				HeapType = heapType;
-				return;
-			}
-			var elements = new Entry[_entries.Length];
-			var elementsCount = Count;
-			Array.Copy(_entries, elements, _entries.Length);
-			Clear();
 			HeapType = heapType;
-			for (int i = 0; i < elementsCount; i++)
-			{
-				Add(elements[i].Key, elements[i].Value);
-			}
+			return;
 		}
+		var elements = new Entry[_entries.Length];
+		var elementsCount = Count;
+		Array.Copy(_entries, elements, _entries.Length);
+		Clear();
+		HeapType = heapType;
+		for (int i = 0; i < elementsCount; i++)
+		{
+			Add(elements[i].Key, elements[i].Value);
+		}
+	}
 
-		public void CopyTo(Array array, int arrayIndex)
+	public void CopyTo(Array array, int arrayIndex)
         {
             Array.Copy(_entries, 0, array, arrayIndex, _entries.Length);
         }
