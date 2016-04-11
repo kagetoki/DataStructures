@@ -10,9 +10,12 @@ namespace DataStructures
     [DebuggerDisplay("Count = {Count}")]
     public class Heap<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>,
                                         ICollection,
-                                        IReadOnlyCollection<KeyValuePair<TKey, TValue>>
+                                        IReadOnlyCollection<KeyValuePair<TKey, TValue>>,
+										ISerializable,
+										IDeserializationCallback
                                             where TKey : IComparable<TKey>
     {
+		private const string HEAP_TYPE_NAME = "HeapType";
         public int Count { get; private set; }
         object ICollection.SyncRoot { get { return _syncRoot; } }
         public bool IsSynchronized { get { return false; } }
@@ -30,6 +33,19 @@ namespace DataStructures
             _version = 0;
             _syncRoot = new object();
         }
+
+		public Heap(HeapType heapType, IEnumerable<KeyValuePair<TKey, TValue>> source) : this(heapType)
+		{
+			foreach(var pair in source)
+			{
+				Add(pair.Key, pair.Value);
+			}
+		}
+
+		protected Heap(SerializationInfo info, StreamingContext context)
+		{
+			HeapType = (HeapType)info.GetValue(HEAP_TYPE_NAME, typeof(HeapType));
+		}
 
         public void Add(TKey key, TValue value)
         {
@@ -105,33 +121,47 @@ namespace DataStructures
 			}
         }
 
-	public void UpdateHeapType(HeapType heapType)
-	{
-		if (heapType == HeapType) { return; }
-		if (_entries == null || Count == 0)
+		public void UpdateHeapType(HeapType heapType, bool forceRebuild = false)
 		{
+			if (heapType == HeapType && !forceRebuild) { return; }
+			if (_entries == null || Count == 0)
+			{
+				HeapType = heapType;
+				return;
+			}
+			var elements = new Entry[_entries.Length];
+			var elementsCount = Count;
+			Array.Copy(_entries, elements, _entries.Length);
+			Clear();
 			HeapType = heapType;
-			return;
+			for (int i = 0; i < elementsCount; i++)
+			{
+				Add(elements[i].Key, elements[i].Value);
+			}
 		}
-		var elements = new Entry[_entries.Length];
-		var elementsCount = Count;
-		Array.Copy(_entries, elements, _entries.Length);
-		Clear();
-		HeapType = heapType;
-		for (int i = 0; i < elementsCount; i++)
-		{
-			Add(elements[i].Key, elements[i].Value);
-		}
-	}
 
-	public void CopyTo(Array array, int arrayIndex)
+		public void CopyTo(Array array, int arrayIndex)
         {
             Array.Copy(_entries, 0, array, arrayIndex, _entries.Length);
         }
 
-        #region Private
+		public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
+		{
+			if (info == null)
+			{
+				throw new ArgumentNullException("info");
+			}
+			info.AddValue(HEAP_TYPE_NAME, HeapType);
+		}
 
-        private void SiftUp(int entryIndex)
+		void IDeserializationCallback.OnDeserialization(object sender)
+		{
+			this.UpdateHeapType(HeapType, true);
+		}
+
+		#region Private
+
+		private void SiftUp(int entryIndex)
         {
             var entry = _entries[entryIndex];
             if (entryIndex == 0)
@@ -237,9 +267,9 @@ namespace DataStructures
 				return string.Format("[{0}:{1}]", Key, Value);
 			}
 		}
-
-        #region IEnumerable
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+		
+		#region IEnumerable
+		public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
             return new Enumerator(this);
         }
@@ -248,8 +278,8 @@ namespace DataStructures
         {
             return new Enumerator(this);
         }
-
-        private struct Enumerator : IEnumerator, IEnumerator<KeyValuePair<TKey, TValue>>
+		
+		private struct Enumerator : IEnumerator, IEnumerator<KeyValuePair<TKey, TValue>>
         {
             private readonly int _heapVersion;
             private Heap<TKey, TValue> _heap;
