@@ -45,6 +45,7 @@ namespace DataStructures
 		protected Heap(SerializationInfo info, StreamingContext context)
 		{
 			HeapType = (HeapType)info.GetValue(HEAP_TYPE_NAME, typeof(HeapType));
+			_syncRoot = new object();
 		}
 
         public void Add(TKey key, TValue value)
